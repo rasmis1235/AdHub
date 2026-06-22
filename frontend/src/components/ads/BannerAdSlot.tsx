@@ -1,103 +1,109 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { cn } from '../../utils/cn';
-import { AD_MODE, AD_SCRIPTS } from '../../lib/adProviders';
 
-const ADSTERRA_SMARTLINK = 'https://www.effectivecpmnetwork.com/swm99h7e?key=2e97e1250c279cf3e75cc5b1ce1b3544';
+/**
+ * Multi-network banner slot with auto-refresh.
+ * Each render = 1 CPM impression. Refresh every N seconds = more CPM.
+ *
+ * Adsterra banner codes: paste the full <script> src URL per zone below.
+ * Get from: Adsterra dashboard → GET CODE → copy src from the script tag.
+ */
 
-type SlotType = 'adsterra-smartlink' | 'adsterra-native' | 'monetag-native' | 'monetag-inpage' | 'placeholder';
+// ── Adsterra banner zone script URLs (fill in after GET CODE) ────────────────
+const ADSTERRA_ZONES: Record<string, string> = {
+  '300x250': '', // zone 29749801 — paste src URL here
+  '728x90':  '', // zone 29749802 — paste src URL here
+  '160x600': '', // zone 29749800 — paste src URL here
+  '468x60':  '', // zone 29749799 — paste src URL here
+  '320x50':  '', // zone 29749803 — paste src URL here
+  '160x300': '', // zone 29749798 — paste src URL here
+  'native':  '', // zone 29749795 — paste src URL here
+};
+
+// ── Network badge ─────────────────────────────────────────────────────────────
+type Network = 'adsterra' | 'monetag' | 'placeholder';
 
 interface Props {
-  slot: SlotType;
+  slot: keyof typeof ADSTERRA_ZONES | 'monetag-native' | 'monetag-inpage';
   className?: string;
-  label?: string;
+  refreshIntervalSec?: number; // auto-refresh to get new impression
 }
 
-function AdsterraSmartlink() {
-  return (
-    <iframe
-      src={ADSTERRA_SMARTLINK}
-      style={{ width: '100%', height: '100%', border: 'none', overflow: 'hidden', display: 'block' }}
-      scrolling="no"
-      title="Advertisement"
-    />
-  );
-}
-
-// Adsterra Native Banner script (zone 29749795)
-function AdsterraNative() {
+// Each mount of this component fires one script → one CPM impression.
+// Unmount + remount = new impression. We use a key to force this.
+function AdScriptSlot({ scriptSrc, network }: { scriptSrc: string; network: Network }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (!ref.current || !AD_SCRIPTS.native) return;
+    if (!ref.current || !scriptSrc) return;
+    // Clear previous ad
+    ref.current.innerHTML = '';
     const s = document.createElement('script');
-    s.src = AD_SCRIPTS.native;
+    s.src = scriptSrc;
     s.async = true;
     s.setAttribute('data-cfasync', 'false');
     ref.current.appendChild(s);
-    return () => { try { ref.current?.removeChild(s); } catch {} };
-  }, []);
-  return <div ref={ref} className="w-full h-full" />;
-}
+  }, [scriptSrc]);
 
-function MonatagNative({ zoneId }: { zoneId: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!ref.current || !zoneId) return;
-    const s = document.createElement('script');
-    s.async = true;
-    s.src = `//cdn.monetag.com/natb.js?id=${zoneId}`;
-    ref.current.appendChild(s);
-    return () => { try { ref.current?.removeChild(s); } catch {} };
-  }, [zoneId]);
-  return <div ref={ref} className="w-full h-full" />;
-}
-
-function MonatagInPage({ zoneId }: { zoneId: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!ref.current || !zoneId) return;
-    const s = document.createElement('script');
-    s.async = true;
-    s.src = `//glimmer.monetag.com/inpage.js?zone=${zoneId}`;
-    ref.current.appendChild(s);
-    return () => { try { ref.current?.removeChild(s); } catch {} };
-  }, [zoneId]);
-  return <div ref={ref} className="w-full h-full" />;
-}
-
-function PlaceholderBanner() {
   return (
-    <div className="w-full h-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center rounded-lg">
-      <div className="text-center text-white px-3">
-        <p className="font-semibold text-sm">Advertisement</p>
-        <p className="text-white/70 text-xs mt-0.5">Ad loading...</p>
-      </div>
+    <div className="relative w-full h-full">
+      <div ref={ref} className="w-full h-full" />
+      <span className="absolute top-0.5 right-0.5 bg-black/40 text-white text-[9px] px-1 rounded pointer-events-none uppercase tracking-wide">
+        {network}
+      </span>
     </div>
   );
 }
 
-export function BannerAdSlot({ slot, className }: Props) {
-  let content: React.ReactNode;
+function MonatagSlot({ src }: { src: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!ref.current || !src) return;
+    ref.current.innerHTML = '';
+    const s = document.createElement('script');
+    s.async = true;
+    s.src = src;
+    ref.current.appendChild(s);
+  }, [src]);
+  return <div ref={ref} className="w-full h-full" />;
+}
 
-  if (!AD_MODE) {
-    content = <PlaceholderBanner />;
-  } else if (slot === 'adsterra-smartlink') {
-    content = <AdsterraSmartlink />;
-  } else if (slot === 'adsterra-native' && AD_SCRIPTS.native) {
-    content = <AdsterraNative />;
-  } else if (slot === 'monetag-native' && AD_SCRIPTS.monetag2) {
-    content = <MonatagNative zoneId={AD_SCRIPTS.monetag2} />;
-  } else if (slot === 'monetag-inpage' && AD_SCRIPTS.monetag1) {
-    content = <MonatagInPage zoneId={AD_SCRIPTS.monetag1} />;
+function PlaceholderBanner({ label }: { label?: string }) {
+  return (
+    <div className="w-full h-full bg-gray-100 flex items-center justify-center rounded-lg border border-dashed border-gray-300">
+      <p className="text-gray-400 text-xs">{label ?? 'Ad'}</p>
+    </div>
+  );
+}
+
+export function BannerAdSlot({ slot, className, refreshIntervalSec }: Props) {
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Auto-refresh: unmount+remount the ad script → new CPM impression
+  useEffect(() => {
+    if (!refreshIntervalSec) return;
+    const t = setInterval(() => setRefreshKey((k) => k + 1), refreshIntervalSec * 1000);
+    return () => clearInterval(t);
+  }, [refreshIntervalSec]);
+
+  const monetagZone1 = import.meta.env.VITE_MONETAG_ZONE_1 || '';
+  const monetagZone2 = import.meta.env.VITE_MONETAG_ZONE_2 || '';
+
+  let content: React.ReactNode;
+  const zoneSrc = ADSTERRA_ZONES[slot as keyof typeof ADSTERRA_ZONES] || '';
+
+  if (zoneSrc) {
+    content = <AdScriptSlot key={refreshKey} scriptSrc={zoneSrc} network="adsterra" />;
+  } else if (slot === 'monetag-native' && monetagZone2) {
+    content = <MonatagSlot key={refreshKey} src={`//cdn.monetag.com/natb.js?id=${monetagZone2}`} />;
+  } else if (slot === 'monetag-inpage' && monetagZone1) {
+    content = <MonatagSlot key={refreshKey} src={`//glimmer.monetag.com/inpage.js?zone=${monetagZone1}`} />;
   } else {
-    content = <PlaceholderBanner />;
+    content = <PlaceholderBanner label={String(slot)} />;
   }
 
   return (
-    <div className={cn('relative rounded-xl overflow-hidden border border-gray-100 min-h-[90px]', className)}>
-      <span className="absolute top-1 left-1 z-10 bg-black/30 text-white text-[10px] px-1 py-px rounded pointer-events-none">
-        Ad
-      </span>
-      <div className="w-full h-full">{content}</div>
+    <div className={cn('relative overflow-hidden rounded-xl border border-gray-100', className)}>
+      {content}
     </div>
   );
 }

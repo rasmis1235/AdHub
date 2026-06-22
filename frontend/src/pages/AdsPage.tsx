@@ -280,11 +280,19 @@ export default function AdsPage() {
           </div>
         </div>
 
-        {/* Main 3-column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_300px_260px] gap-6">
+        {/* Leaderboard banner — 728x90, refreshes every 60s = extra CPM */}
+        <BannerAdSlot slot="728x90" className="h-[90px] mb-4 hidden sm:block" refreshIntervalSec={60} />
 
-          {/* ─── CENTER: Video Player + Banners ─── */}
-          <div className="space-y-4 order-2 lg:order-1">
+        {/* Main layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] xl:grid-cols-[160px_1fr_300px_260px] gap-4">
+
+          {/* ─── LEFT SKYSCRAPER (xl only) — 160x600, refreshes every 90s ─── */}
+          <div className="hidden xl:flex flex-col gap-3">
+            <BannerAdSlot slot="160x600" className="h-[600px]" refreshIntervalSec={90} />
+          </div>
+
+          {/* ─── CENTER: Video Player + banners below ─── */}
+          <div className="space-y-3 order-2 lg:order-1">
             <VideoAdPlayer
               ad={activeAd}
               queueIndex={Math.max(0, queueIndex)}
@@ -299,20 +307,18 @@ export default function AdsPage() {
               isClaiming={completeMutation.isPending}
             />
 
-            {/* Passive income banner row — earns while you watch video */}
-            <div>
-              <p className="text-xs text-gray-400 mb-2 flex items-center gap-1.5">
-                <Coins size={11} />
-                Passive banners — earn extra while watching video above
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                <BannerAdSlot slot="adsterra-smartlink" className="h-24" label="Banner 1" />
-                <BannerAdSlot slot="adsterra-native" className="h-24" label="Banner 2" />
-              </div>
+            {/* 3 banner slots below player — all load simultaneously = 3 CPM */}
+            <p className="text-xs text-gray-400 flex items-center gap-1.5">
+              <Coins size={11} /> Passive banners loading below
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              <BannerAdSlot slot="300x250" className="h-[100px]" refreshIntervalSec={45} />
+              <BannerAdSlot slot="468x60"  className="h-[100px]" refreshIntervalSec={45} />
+              <BannerAdSlot slot="native"  className="h-[100px]" refreshIntervalSec={45} />
             </div>
 
-            {/* Second passive banner */}
-            <BannerAdSlot slot="adsterra-smartlink" className="h-20" label="Native Ad" />
+            {/* Mobile leaderboard */}
+            <BannerAdSlot slot="320x50" className="h-[50px] sm:hidden" refreshIntervalSec={60} />
           </div>
 
           {/* ─── RIGHT: Ad Queue ─── */}
@@ -324,9 +330,11 @@ export default function AdsPage() {
               autoPlay={autoPlay}
               onToggleAutoPlay={() => setAutoPlay((a) => !a)}
             />
+            {/* 300x250 in sidebar, refreshes every 60s */}
+            <BannerAdSlot slot="160x300" className="h-[300px] mt-3" refreshIntervalSec={60} />
           </div>
 
-          {/* ─── RIGHT-2: Earnings Tracker (xl only, else stacked above) ─── */}
+          {/* ─── RIGHT-2: Earnings Tracker ─── */}
           <div className="order-1 lg:order-3">
             <EarningsTracker
               sessionPoints={sessionPoints}
