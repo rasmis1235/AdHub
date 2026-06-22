@@ -78,17 +78,23 @@ app.use(errorHandler);
 async function bootstrap() {
   try {
     await testConnection();
-    await redis.ping();
-    logger.info('Redis connected');
-
-    app.listen(config.port, '0.0.0.0', () => {
-      logger.info(`AdHub API running on port ${config.port} [${config.env}]`);
-      logger.info(`Health check: http://localhost:${config.port}/health`);
-    });
   } catch (error) {
-    logger.error('Failed to start server:', error);
+    logger.error('Failed to connect to database:', error);
     process.exit(1);
   }
+
+  try {
+    await redis.connect();
+    await redis.ping();
+    logger.info('Redis connected');
+  } catch (error) {
+    logger.warn('Redis unavailable — caching disabled, server continuing:', error);
+  }
+
+  app.listen(config.port, '0.0.0.0', () => {
+    logger.info(`AdHub API running on port ${config.port} [${config.env}]`);
+    logger.info(`Health check: http://localhost:${config.port}/health`);
+  });
 }
 
 // Graceful shutdown

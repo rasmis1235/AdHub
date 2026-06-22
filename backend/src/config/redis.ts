@@ -2,14 +2,16 @@ import Redis from 'ioredis';
 import { config } from './index';
 import { logger } from '../utils/logger';
 
+const isTLS = config.redis.url.startsWith('rediss://');
+
 const redisOptions = {
   maxRetriesPerRequest: 3,
-  enableReadyCheck: true,
-  lazyConnect: false,
-  password: config.redis.password,
+  enableReadyCheck: false,
+  lazyConnect: true,
+  ...(isTLS ? { tls: { rejectUnauthorized: false } } : {}),
   retryStrategy: (times: number) => {
-    if (times > 5) return null;
-    return Math.min(times * 500, 2000);
+    if (times > 3) return null;
+    return Math.min(times * 1000, 3000);
   },
 };
 
