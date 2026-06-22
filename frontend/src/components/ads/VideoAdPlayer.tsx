@@ -110,11 +110,11 @@ export function VideoAdPlayer({
             muted={muted}
             onEnded={() => { if (canClaim) onClaim(false); }}
           />
-        ) : AD_MODE && AD_KEYS.adsterra ? (
-          /* Live Adsterra ad iframe */
+        ) : AD_MODE && AD_KEYS.adsterraDirect ? (
+          /* Live Adsterra Direct Link iframe */
           <iframe
             key={ad.id}
-            src={`//www.profitablegateway.com/${AD_KEYS.adsterra}/direct.html`}
+            src={AD_KEYS.adsterraDirect}
             style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
             scrolling="no"
             title="Advertisement"

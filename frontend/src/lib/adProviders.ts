@@ -30,12 +30,13 @@
 export const AD_MODE = import.meta.env.VITE_AD_MODE === 'live';
 
 export const AD_KEYS = {
-  adsterra:   import.meta.env.VITE_ADSTERRA_KEY   || '',
-  popads:     import.meta.env.VITE_POPADS_ID      || '',
-  hilltopads: import.meta.env.VITE_HILLTOPADS_ID  || '',
-  clickadu:   import.meta.env.VITE_CLICKADU_ZONE  || '',
-  monetag1:   import.meta.env.VITE_MONETAG_ZONE_1 || '',
-  monetag2:   import.meta.env.VITE_MONETAG_ZONE_2 || '',
+  adsterra:        import.meta.env.VITE_ADSTERRA_KEY         || '',
+  adsterraDirect:  import.meta.env.VITE_ADSTERRA_DIRECT_URL  || '',
+  popads:          import.meta.env.VITE_POPADS_ID            || '',
+  hilltopads:      import.meta.env.VITE_HILLTOPADS_ID        || '',
+  clickadu:        import.meta.env.VITE_CLICKADU_ZONE        || '',
+  monetag1:        import.meta.env.VITE_MONETAG_ZONE_1       || '',
+  monetag2:        import.meta.env.VITE_MONETAG_ZONE_2       || '',
 } as const;
 
 export type ProviderName = keyof typeof AD_KEYS;

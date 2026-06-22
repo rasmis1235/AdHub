@@ -26,11 +26,11 @@ interface Props {
 // This format works WITHOUT site verification.
 // Adsterra direct link earns CPM for every iframe load.
 function AdsterraDirect() {
-  const key = AD_KEYS.adsterra;
-  if (!key) return null;
+  const url = AD_KEYS.adsterraDirect;
+  if (!url) return null;
   return (
     <iframe
-      src={`//www.profitablegateway.com/${key}/direct.html`}
+      src={url}
       style={{ width: '100%', height: '100%', border: 'none', overflow: 'hidden' }}
       scrolling="no"
       title="Advertisement"
@@ -98,7 +98,7 @@ export function BannerAdSlot({ slot, className }: Props) {
 
   if (!AD_MODE) {
     content = <PlaceholderBanner />;
-  } else if (slot === 'adsterra-direct' && isActive('adsterra')) {
+  } else if (slot === 'adsterra-direct' && isActive('adsterraDirect')) {
     content = <AdsterraDirect />;
   } else if (slot === 'monetag-native' && isActive('monetag2')) {
     content = <MonatagNative zoneId={AD_KEYS.monetag2} />;

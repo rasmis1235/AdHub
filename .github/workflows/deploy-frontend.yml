@@ -32,6 +32,7 @@ jobs:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
           VITE_AD_MODE: ${{ secrets.VITE_AD_MODE }}
           VITE_ADSTERRA_KEY: ${{ secrets.VITE_ADSTERRA_KEY }}
+          VITE_ADSTERRA_DIRECT_URL: ${{ secrets.VITE_ADSTERRA_DIRECT_URL }}
           VITE_POPADS_ID: ${{ secrets.VITE_POPADS_ID }}
           VITE_HILLTOPADS_ID: ${{ secrets.VITE_HILLTOPADS_ID }}
         run: npm run build
