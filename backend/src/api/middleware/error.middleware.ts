@@ -10,7 +10,7 @@ export class AppError extends Error {
   ) {
     super(message);
     this.name = 'AppError';
-    Error.captureStackTrace(this, this.constructor);
+    if (Error.captureStackTrace) Error.captureStackTrace(this, this.constructor);
   }
 }
 
@@ -48,7 +48,7 @@ export function errorHandler(
   }
 
   // PostgreSQL errors
-  if ((err as NodeJS.ErrnoException).code === '23505') {
+  if ((err as Error & { code?: string }).code === '23505') {
     res.status(409).json({ success: false, error: 'Resource already exists' });
     return;
   }
