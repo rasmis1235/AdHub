@@ -1,16 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { AD_MODE, AD_KEYS, isActive } from '../lib/adProviders';
+import { AD_MODE, AD_SCRIPTS } from '../lib/adProviders';
 
 /**
- * Loads ALL active ad network scripts once per page session.
- * Call this once inside the AdsPage (or Layout if you want ads everywhere).
- *
- * Networks loaded here are "page-level" — they serve passively in the background:
- *  - Adsterra Social Bar  → floating widget, earns per impression
- *  - PopAds               → pop-under on first click, earns per pop view
- *  - ClickAdu             → push notification pop, earns per view
- *  - HilltopAds           → in-page push / native, earns per impression
- *  - Monetag              → in-page push / native, earns per impression
+ * Loads all active Adsterra page-level scripts once per session.
+ * Social Bar and Popunder run passively in the background while the user watches ads.
  */
 export function useAdNetworks() {
   const loaded = useRef(false);
@@ -19,59 +12,42 @@ export function useAdNetworks() {
     if (loaded.current || !AD_MODE) return;
     loaded.current = true;
 
-    // ── Adsterra Social Bar ──────────────────────────────────────────────
-    // Social Bar floats on page, earns CPM passively.
-    // Script: //www.highperformanceformat.com/{KEY}/invoke.js
-    if (isActive('adsterra')) {
-      injectScript(
-        `//www.highperformanceformat.com/${AD_KEYS.adsterra}/invoke.js`,
-        { 'data-cfasync': 'false' }
-      );
+    // Adsterra Social Bar — floating widget, earns CPM passively
+    if (AD_SCRIPTS.socialBar) {
+      injectScript(AD_SCRIPTS.socialBar, { 'data-cfasync': 'false' });
     }
 
-    // ── PopAds ──────────────────────────────────────────────────────────
-    // Loads a pop-under on first user click. Earns per pop view (pure CPM).
-    // Signup: popads.net → "Become a Publisher" → get numeric publisher ID
-    // Very easy, no site verification required.
-    if (isActive('popads')) {
+    // Adsterra Popunder — earns per page visit (fires on first user click)
+    if (AD_SCRIPTS.popunder) {
+      injectScript(AD_SCRIPTS.popunder, { 'data-cfasync': 'false' });
+    }
+
+    // PopAds
+    if (AD_SCRIPTS.popads) {
       injectScript('//cdn.popads.net/pop.js', {}, () => {
         const w = window as unknown as Record<string, unknown>;
         if (typeof w['popad'] === 'function') {
-          (w['popad'] as (id: string) => void)(AD_KEYS.popads);
+          (w['popad'] as (id: string) => void)(AD_SCRIPTS.popads);
         }
       });
     }
 
-    // ── ClickAdu ────────────────────────────────────────────────────────
-    // Push/pop network, CPM based. Easy signup at clickadu.com
-    if (isActive('clickadu')) {
-      injectScript(
-        `//brtmr.com/${AD_KEYS.clickadu}/invoke.js`,
-        { 'data-cfasync': 'false' }
-      );
+    // HilltopAds
+    if (AD_SCRIPTS.hilltopads) {
+      injectScript(`//jsc.mgrid.com/${AD_SCRIPTS.hilltopads}/invoke.js`, { 'data-cfasync': 'false' });
     }
 
-    // ── HilltopAds In-Page Push ──────────────────────────────────────────
-    // High India CPM. Signup at hilltopads.com → Publisher zone (In-Page Push)
-    if (isActive('hilltopads')) {
-      injectScript(
-        `//jsc.mgrid.com/${AD_KEYS.hilltopads}/invoke.js`,
-        { 'data-cfasync': 'false' }
-      );
+    // ClickAdu
+    if (AD_SCRIPTS.clickadu) {
+      injectScript(`//brtmr.com/${AD_SCRIPTS.clickadu}/invoke.js`, { 'data-cfasync': 'false' });
     }
 
-    // ── Monetag In-Page Push ─────────────────────────────────────────────
-    if (isActive('monetag1')) {
-      injectScript(
-        `//glimmer.monetag.com/inpage.js?zone=${AD_KEYS.monetag1}`,
-        {}
-      );
+    // Monetag
+    if (AD_SCRIPTS.monetag1) {
+      injectScript(`//glimmer.monetag.com/inpage.js?zone=${AD_SCRIPTS.monetag1}`, {});
     }
-    if (isActive('monetag2')) {
-      injectScript(
-        `//cdn.monetag.com/natb.js?id=${AD_KEYS.monetag2}`,
-        {}
-      );
+    if (AD_SCRIPTS.monetag2) {
+      injectScript(`//cdn.monetag.com/natb.js?id=${AD_SCRIPTS.monetag2}`, {});
     }
   }, []);
 }

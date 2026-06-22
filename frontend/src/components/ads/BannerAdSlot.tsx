@@ -1,20 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { cn } from '../../utils/cn';
-import { AD_MODE, AD_KEYS, isActive } from '../../lib/adProviders';
+import { AD_MODE, AD_SCRIPTS } from '../../lib/adProviders';
 
-/**
- * Inline banner ad slot.
- *
- * "page-level" networks (Adsterra Social Bar, PopAds, ClickAdu, HilltopAds)
- * are loaded globally via useAdNetworks() in AdsPage.
- *
- * This component handles INLINE banner slots:
- *  - adsterra-direct  → Adsterra Direct Link iframe (no site verification needed)
- *  - monetag-native   → Monetag native/banner zone
- *  - placeholder      → Animated demo banner (dev mode)
- */
-
-type SlotType = 'adsterra-direct' | 'monetag-native' | 'monetag-inpage' | 'placeholder';
+type SlotType = 'adsterra-smartlink' | 'adsterra-native' | 'monetag-native' | 'monetag-inpage' | 'placeholder';
 
 interface Props {
   slot: SlotType;
@@ -22,23 +10,34 @@ interface Props {
   label?: string;
 }
 
-// ── Adsterra Direct Link (iframe) ──────────────────────────────────────────
-// This format works WITHOUT site verification.
-// Adsterra direct link earns CPM for every iframe load.
-function AdsterraDirect() {
-  const url = AD_KEYS.adsterraDirect;
-  if (!url) return null;
+// Adsterra Smartlink iframe (zone 29749797)
+function AdsterraSmartlink() {
+  if (!AD_SCRIPTS.smartlink) return <PlaceholderBanner />;
   return (
     <iframe
-      src={url}
-      style={{ width: '100%', height: '100%', border: 'none', overflow: 'hidden' }}
+      src={AD_SCRIPTS.smartlink}
+      style={{ width: '100%', height: '100%', border: 'none', overflow: 'hidden', display: 'block' }}
       scrolling="no"
       title="Advertisement"
     />
   );
 }
 
-// ── Monetag Native Banner (script) ─────────────────────────────────────────
+// Adsterra Native Banner script (zone 29749795)
+function AdsterraNative() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!ref.current || !AD_SCRIPTS.native) return;
+    const s = document.createElement('script');
+    s.src = AD_SCRIPTS.native;
+    s.async = true;
+    s.setAttribute('data-cfasync', 'false');
+    ref.current.appendChild(s);
+    return () => { try { ref.current?.removeChild(s); } catch {} };
+  }, []);
+  return <div ref={ref} className="w-full h-full" />;
+}
+
 function MonatagNative({ zoneId }: { zoneId: string }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -65,45 +64,30 @@ function MonatagInPage({ zoneId }: { zoneId: string }) {
   return <div ref={ref} className="w-full h-full" />;
 }
 
-// ── Placeholder (dev / fallback) ───────────────────────────────────────────
 function PlaceholderBanner() {
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setTick((n) => n + 1), 3000);
-    return () => clearInterval(t);
-  }, []);
-
-  const items = [
-    { text: 'Shop Amazing Deals', sub: 'Up to 70% off', bg: 'bg-indigo-500' },
-    { text: 'Play & Win Prizes',  sub: 'Free to join',  bg: 'bg-emerald-500' },
-    { text: 'Earn More Today',    sub: 'Top earners made ₹500+', bg: 'bg-amber-500' },
-    { text: 'Download Our App',   sub: 'Get bonus 100 pts',      bg: 'bg-rose-500' },
-    { text: 'Finance App',        sub: 'Invest from ₹10',        bg: 'bg-violet-500' },
-  ];
-  const item = items[tick % items.length];
-
   return (
-    <div className={`w-full h-full ${item.bg} flex items-center justify-center rounded-lg transition-colors duration-700`}>
+    <div className="w-full h-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center rounded-lg">
       <div className="text-center text-white px-3">
-        <p className="font-semibold text-sm leading-tight">{item.text}</p>
-        <p className="text-white/70 text-xs mt-0.5">{item.sub}</p>
+        <p className="font-semibold text-sm">Advertisement</p>
+        <p className="text-white/70 text-xs mt-0.5">Ad loading...</p>
       </div>
     </div>
   );
 }
 
-// ── Main component ─────────────────────────────────────────────────────────
 export function BannerAdSlot({ slot, className }: Props) {
   let content: React.ReactNode;
 
   if (!AD_MODE) {
     content = <PlaceholderBanner />;
-  } else if (slot === 'adsterra-direct' && isActive('adsterraDirect')) {
-    content = <AdsterraDirect />;
-  } else if (slot === 'monetag-native' && isActive('monetag2')) {
-    content = <MonatagNative zoneId={AD_KEYS.monetag2} />;
-  } else if (slot === 'monetag-inpage' && isActive('monetag1')) {
-    content = <MonatagInPage zoneId={AD_KEYS.monetag1} />;
+  } else if (slot === 'adsterra-smartlink') {
+    content = <AdsterraSmartlink />;
+  } else if (slot === 'adsterra-native' && AD_SCRIPTS.native) {
+    content = <AdsterraNative />;
+  } else if (slot === 'monetag-native' && AD_SCRIPTS.monetag2) {
+    content = <MonatagNative zoneId={AD_SCRIPTS.monetag2} />;
+  } else if (slot === 'monetag-inpage' && AD_SCRIPTS.monetag1) {
+    content = <MonatagInPage zoneId={AD_SCRIPTS.monetag1} />;
   } else {
     content = <PlaceholderBanner />;
   }

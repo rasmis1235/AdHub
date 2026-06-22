@@ -306,13 +306,13 @@ export default function AdsPage() {
                 Passive banners — earn extra while watching video above
               </p>
               <div className="grid grid-cols-2 gap-3">
-                <BannerAdSlot slot="adsterra-direct" className="h-24" label="Banner 1" />
-                <BannerAdSlot slot="monetag-inpage" className="h-24" label="Banner 2" />
+                <BannerAdSlot slot="adsterra-smartlink" className="h-24" label="Banner 1" />
+                <BannerAdSlot slot="adsterra-native" className="h-24" label="Banner 2" />
               </div>
             </div>
 
             {/* Second passive banner */}
-            <BannerAdSlot slot="monetag-native" className="h-20" label="Native Ad" />
+            <BannerAdSlot slot="adsterra-smartlink" className="h-20" label="Native Ad" />
           </div>
 
           {/* ─── RIGHT: Ad Queue ─── */}

@@ -7,7 +7,7 @@ import {
 import { Ad } from '../../types';
 import { cn } from '../../utils/cn';
 import { Button } from '../common/Button';
-import { AD_MODE, AD_KEYS } from '../../lib/adProviders';
+import { AD_MODE, AD_SCRIPTS } from '../../lib/adProviders';
 
 interface Props {
   ad: Ad | null;
@@ -110,14 +110,15 @@ export function VideoAdPlayer({
             muted={muted}
             onEnded={() => { if (canClaim) onClaim(false); }}
           />
-        ) : AD_MODE && AD_KEYS.adsterraDirect ? (
-          /* Live Adsterra Direct Link iframe */
+        ) : AD_MODE && AD_SCRIPTS.smartlink ? (
+          /* Live Adsterra Smartlink iframe */
           <iframe
             key={ad.id}
-            src={AD_KEYS.adsterraDirect}
+            src={AD_SCRIPTS.smartlink}
             style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
             scrolling="no"
             title="Advertisement"
+            allow="autoplay"
           />
         ) : (
           /* Dev/demo fallback */
