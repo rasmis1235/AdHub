@@ -115,6 +115,29 @@ router.get('/verify-email', async (req: Request, res: Response) => {
   sendSuccess(res, null, 'Email verified successfully! Your account is now active.');
 });
 
+// POST /api/auth/resend-verification
+router.post('/resend-verification', authRateLimit, async (req: Request, res: Response) => {
+  const { email } = z.object({ email: z.string().email() }).parse(req.body);
+  const { rows } = await (await import('../../config/database')).query<{ id: string; full_name: string; email_verified: boolean }>(
+    `SELECT id, full_name, email_verified FROM users WHERE email = $1 AND deleted_at IS NULL`,
+    [email.toLowerCase()]
+  );
+  if (!rows[0] || rows[0].email_verified) {
+    sendSuccess(res, null, 'If your email exists and is unverified, a new link has been sent.');
+    return;
+  }
+  const { generateToken } = await import('../../utils/crypto');
+  const { query: dbQuery } = await import('../../config/database');
+  const token = generateToken(32);
+  await dbQuery(
+    `INSERT INTO verification_tokens (user_id, token, type, expires_at)
+     VALUES ($1, $2, 'email_verify', NOW() + INTERVAL '24 hours')`,
+    [rows[0].id, token]
+  );
+  emailService.sendVerificationEmail(email, rows[0].full_name, token).catch(() => {});
+  sendSuccess(res, null, 'If your email exists and is unverified, a new link has been sent.');
+});
+
 // POST /api/auth/forgot-password
 router.post('/forgot-password', authRateLimit, async (req: Request, res: Response) => {
   const { email } = forgotPasswordSchema.parse(req.body);

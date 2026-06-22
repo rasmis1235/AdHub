@@ -7,6 +7,7 @@ const transporter = nodemailer.createTransport({
   port: config.email.port,
   secure: config.email.port === 465,
   auth: { user: config.email.user, pass: config.email.pass },
+  tls: { rejectUnauthorized: false },
 });
 
 function wrapEmail(title: string, body: string): string {

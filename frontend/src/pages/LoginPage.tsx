@@ -30,6 +30,9 @@ export default function LoginPage() {
     reValidateMode: 'onChange',
   });
 
+  const [lastEmail, setLastEmail] = useState('');
+  const [showResend, setShowResend] = useState(false);
+
   const onSubmit = async (data: FormData) => {
     try {
       const result = await login(data.email, data.password);
@@ -39,9 +42,24 @@ export default function LoginPage() {
       } else {
         const msg = (result.payload as string) || 'Login failed';
         toast.error(msg);
+        if (msg.includes('verify your email')) {
+          setLastEmail(data.email);
+          setShowResend(true);
+        }
       }
     } catch (err) {
       toast.error('Something went wrong. Please try again.');
+    }
+  };
+
+  const resendVerification = async () => {
+    try {
+      const { api } = await import('../utils/api');
+      await api.post('/auth/resend-verification', { email: lastEmail });
+      toast.success('Verification email sent! Check your inbox and spam folder.');
+      setShowResend(false);
+    } catch {
+      toast.error('Could not resend. Try again later.');
     }
   };
 
@@ -107,6 +125,19 @@ export default function LoginPage() {
             <Button type="submit" fullWidth isLoading={isLoading} size="lg">
               Sign In
             </Button>
+
+            {showResend && (
+              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+                Email not verified.{' '}
+                <button
+                  type="button"
+                  onClick={resendVerification}
+                  className="font-semibold underline hover:text-yellow-900"
+                >
+                  Resend verification email
+                </button>
+              </div>
+            )}
           </form>
 
           <div className="mt-4 relative">
