@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { cn } from '../../utils/cn';
-import { AD_SCRIPTS } from '../../lib/adProviders';
+import { AD_MODE, AD_SCRIPTS } from '../../lib/adProviders';
 
 const ADSTERRA_SMARTLINK = 'https://www.effectivecpmnetwork.com/swm99h7e?key=2e97e1250c279cf3e75cc5b1ce1b3544';
 
