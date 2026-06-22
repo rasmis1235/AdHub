@@ -42,6 +42,7 @@ export default function RegisterPage() {
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
+    mode: 'onTouched',
     defaultValues: { referral_code: refCode },
   });
 
