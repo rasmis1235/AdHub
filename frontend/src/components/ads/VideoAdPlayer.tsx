@@ -7,8 +7,6 @@ import {
 import { Ad } from '../../types';
 import { cn } from '../../utils/cn';
 import { Button } from '../common/Button';
-// Adsterra Smartlink — rasmis1235.tech zone 29749797
-const ADSTERRA_SMARTLINK = 'https://www.effectivecpmnetwork.com/swm99h7e?key=2e97e1250c279cf3e75cc5b1ce1b3544';
 
 interface Props {
   ad: Ad | null;
@@ -112,15 +110,26 @@ export function VideoAdPlayer({
             onEnded={() => { if (canClaim) onClaim(false); }}
           />
         ) : (
-          /* Adsterra Smartlink iframe */
-          <iframe
-            key={ad.id}
-            src={ADSTERRA_SMARTLINK}
-            style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-            scrolling="no"
-            title="Advertisement"
-            allow="autoplay"
-          />
+          /* Display ad panel — banner ad loads here */
+          <div
+            id={`ad-slot-${ad.id}`}
+            className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 cursor-pointer"
+            onClick={onVisitSite}
+          >
+            {/* Ad content area — replaced with banner script when available */}
+            <div className="text-center px-8 max-w-lg">
+              <div className="text-4xl mb-4">📢</div>
+              <p className="text-white text-xl font-bold mb-2">{ad.title}</p>
+              <p className="text-gray-400 text-sm mb-6">{ad.description || 'Sponsored content'}</p>
+              <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-5 py-2 text-white text-sm font-medium">
+                <span>⏱</span>
+                <span>Watch for {timeRemaining}s to earn <span className="text-yellow-400 font-bold">+{ad.points_per_view} pts</span></span>
+              </div>
+              {canClaim && (
+                <div className="mt-4 text-green-400 font-bold animate-pulse">✓ Ready! Click Claim below</div>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Top progress bar */}
