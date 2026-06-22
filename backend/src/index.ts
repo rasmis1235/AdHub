@@ -33,10 +33,15 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// CORS
+// CORS — allow configured origins plus their http:// equivalents during DNS transition
+const allowedOrigins = new Set([
+  ...config.app.allowedOrigins,
+  ...config.app.allowedOrigins.map((o) => o.replace('https://', 'http://')),
+]);
+
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || config.app.allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.has(origin)) {
       callback(null, true);
     } else {
       callback(new Error('CORS policy violation'));

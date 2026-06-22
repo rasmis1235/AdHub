@@ -13,10 +13,14 @@ export const loginThunk = createAsyncThunk(
   'auth/login',
   async (credentials: { email: string; password: string }, { rejectWithValue }) => {
     try {
-      const res = await api.post<{ data: { user: User; accessToken: string } }>(
+      const res = await api.post<{ data: { user: User; accessToken: string; refreshToken?: string } }>(
         '/auth/login', credentials
       );
-      return res.data.data!;
+      const data = res.data.data!;
+      if (data.refreshToken) {
+        localStorage.setItem('refreshToken', data.refreshToken);
+      }
+      return data;
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { error?: string } } })
         ?.response?.data?.error || 'Login failed';
@@ -108,6 +112,7 @@ const authSlice = createSlice({
         state.accessToken = null;
         state.isAuthenticated = false;
         localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
       });
   },
 });

@@ -59,10 +59,11 @@ router.post('/login', authRateLimit, attachDeviceInfo, async (req: Request, res:
   };
   const result = await authService.login(email, password, req.ip || '', deviceInfo);
 
+  const isProduction = process.env.NODE_ENV === 'production';
   res.cookie('refreshToken', result.refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
     maxAge: 30 * 24 * 60 * 60 * 1000,
     path: '/api/auth',
   });
@@ -70,6 +71,7 @@ router.post('/login', authRateLimit, attachDeviceInfo, async (req: Request, res:
   sendSuccess(res, {
     user: result.user,
     accessToken: result.accessToken,
+    refreshToken: result.refreshToken,
   }, 'Login successful');
 });
 
@@ -81,14 +83,15 @@ router.post('/refresh', async (req: Request, res: Response) => {
     return;
   }
   const tokens = await authService.refreshToken(refreshToken, req.ip || '');
+  const isProd = process.env.NODE_ENV === 'production';
   res.cookie('refreshToken', tokens.refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
     maxAge: 30 * 24 * 60 * 60 * 1000,
     path: '/api/auth',
   });
-  sendSuccess(res, { accessToken: tokens.accessToken }, 'Token refreshed');
+  sendSuccess(res, { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken }, 'Token refreshed');
 });
 
 // POST /api/auth/logout

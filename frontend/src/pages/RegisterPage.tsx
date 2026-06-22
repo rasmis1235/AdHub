@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
@@ -10,6 +9,7 @@ import { registerThunk } from '../store/slices/authSlice';
 import { AppDispatch } from '../store';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
+import { useForm } from 'react-hook-form';
 
 const schema = z.object({
   full_name: z.string().min(2, 'At least 2 characters'),
@@ -40,11 +40,29 @@ export default function RegisterPage() {
   const [searchParams] = useSearchParams();
   const refCode = searchParams.get('ref') || '';
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, trigger, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     mode: 'onTouched',
     defaultValues: { referral_code: refCode },
   });
+
+  // Sync browser-autofilled DOM values into react-hook-form before submit
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const fields = ['full_name', 'email', 'username', 'password', 'confirmPassword', 'referral_code'] as const;
+    fields.forEach((field) => {
+      const val = fd.get(field);
+      if (val && typeof val === 'string') {
+        setValue(field, val, { shouldDirty: true, shouldValidate: false });
+      }
+    });
+    const checkbox = e.currentTarget.querySelector<HTMLInputElement>('[name="acceptTerms"]');
+    if (checkbox?.checked) setValue('acceptTerms', true, { shouldValidate: false });
+
+    const valid = await trigger();
+    if (valid) handleSubmit(onSubmit)();
+  };
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
@@ -58,7 +76,7 @@ export default function RegisterPage() {
       }));
 
       if (result.meta.requestStatus === 'fulfilled') {
-        toast.success('Account created! Please check your email to verify.');
+        toast.success('Account created! Check your email to verify.');
         navigate('/login');
       } else {
         toast.error((result.payload as string) || 'Registration failed');
@@ -71,7 +89,6 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-950 via-primary-900 to-accent-600 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-white/10 rounded-2xl mb-3 backdrop-blur">
             <TrendingUp className="text-white" size={28} />
@@ -90,11 +107,13 @@ export default function RegisterPage() {
         )}
 
         <div className="bg-white rounded-2xl p-8 shadow-2xl">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleFormSubmit} className="space-y-4" autoComplete="on">
             <Input
               label="Full Name"
               type="text"
+              name="full_name"
               placeholder="Rahul Kumar"
+              autoComplete="name"
               leftIcon={<User size={16} />}
               error={errors.full_name?.message}
               {...register('full_name')}
@@ -102,7 +121,9 @@ export default function RegisterPage() {
             <Input
               label="Email Address"
               type="email"
+              name="email"
               placeholder="you@example.com"
+              autoComplete="email"
               leftIcon={<Mail size={16} />}
               error={errors.email?.message}
               {...register('email')}
@@ -110,7 +131,9 @@ export default function RegisterPage() {
             <Input
               label="Username"
               type="text"
+              name="username"
               placeholder="rahul_kumar"
+              autoComplete="username"
               leftIcon={<AtSign size={16} />}
               error={errors.username?.message}
               hint="Only letters, numbers, underscore"
@@ -119,7 +142,9 @@ export default function RegisterPage() {
             <Input
               label="Password"
               type={showPassword ? 'text' : 'password'}
+              name="password"
               placeholder="Min 8 chars, 1 uppercase, 1 number"
+              autoComplete="new-password"
               leftIcon={<Lock size={16} />}
               error={errors.password?.message}
               rightElement={
@@ -132,7 +157,9 @@ export default function RegisterPage() {
             <Input
               label="Confirm Password"
               type="password"
+              name="confirmPassword"
               placeholder="Repeat password"
+              autoComplete="new-password"
               leftIcon={<Lock size={16} />}
               error={errors.confirmPassword?.message}
               {...register('confirmPassword')}
@@ -140,7 +167,9 @@ export default function RegisterPage() {
             <Input
               label="Referral Code (optional)"
               type="text"
+              name="referral_code"
               placeholder="AHXXXXXX"
+              autoComplete="off"
               leftIcon={<Gift size={16} />}
               {...register('referral_code')}
             />
@@ -148,6 +177,7 @@ export default function RegisterPage() {
             <label className="flex items-start gap-2 cursor-pointer">
               <input
                 type="checkbox"
+                name="acceptTerms"
                 className="mt-0.5 rounded border-gray-300 text-primary-600"
                 {...register('acceptTerms')}
               />

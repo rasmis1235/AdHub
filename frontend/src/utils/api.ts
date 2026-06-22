@@ -36,9 +36,18 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       if (!refreshPromise) {
+        const storedRefreshToken = localStorage.getItem('refreshToken');
         refreshPromise = api
-          .post<{ data: { accessToken: string } }>('/auth/refresh')
-          .then((r) => r.data.data!.accessToken)
+          .post<{ data: { accessToken: string; refreshToken?: string } }>(
+            '/auth/refresh',
+            storedRefreshToken ? { refreshToken: storedRefreshToken } : {}
+          )
+          .then((r) => {
+            if (r.data.data?.refreshToken) {
+              localStorage.setItem('refreshToken', r.data.data.refreshToken);
+            }
+            return r.data.data!.accessToken;
+          })
           .catch((err) => {
             store.dispatch(logout());
             throw err;
