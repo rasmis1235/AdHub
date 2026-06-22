@@ -111,7 +111,6 @@ export default function RegisterPage() {
             <Input
               label="Full Name"
               type="text"
-              name="full_name"
               placeholder="Rahul Kumar"
               autoComplete="name"
               leftIcon={<User size={16} />}
@@ -121,7 +120,6 @@ export default function RegisterPage() {
             <Input
               label="Email Address"
               type="email"
-              name="email"
               placeholder="you@example.com"
               autoComplete="email"
               leftIcon={<Mail size={16} />}
@@ -131,7 +129,6 @@ export default function RegisterPage() {
             <Input
               label="Username"
               type="text"
-              name="username"
               placeholder="rahul_kumar"
               autoComplete="username"
               leftIcon={<AtSign size={16} />}
@@ -142,7 +139,6 @@ export default function RegisterPage() {
             <Input
               label="Password"
               type={showPassword ? 'text' : 'password'}
-              name="password"
               placeholder="Min 8 chars, 1 uppercase, 1 number"
               autoComplete="new-password"
               leftIcon={<Lock size={16} />}
@@ -157,7 +153,6 @@ export default function RegisterPage() {
             <Input
               label="Confirm Password"
               type="password"
-              name="confirmPassword"
               placeholder="Repeat password"
               autoComplete="new-password"
               leftIcon={<Lock size={16} />}
@@ -167,7 +162,6 @@ export default function RegisterPage() {
             <Input
               label="Referral Code (optional)"
               type="text"
-              name="referral_code"
               placeholder="AHXXXXXX"
               autoComplete="off"
               leftIcon={<Gift size={16} />}
@@ -177,7 +171,6 @@ export default function RegisterPage() {
             <label className="flex items-start gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                name="acceptTerms"
                 className="mt-0.5 rounded border-gray-300 text-primary-600"
                 {...register('acceptTerms')}
               />
