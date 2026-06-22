@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { cn } from '../../utils/cn';
-import { AD_MODE, AD_SCRIPTS } from '../../lib/adProviders';
+import { AD_SCRIPTS } from '../../lib/adProviders';
+
+const ADSTERRA_SMARTLINK = 'https://www.effectivecpmnetwork.com/swm99h7e?key=2e97e1250c279cf3e75cc5b1ce1b3544';
 
 type SlotType = 'adsterra-smartlink' | 'adsterra-native' | 'monetag-native' | 'monetag-inpage' | 'placeholder';
 
@@ -10,12 +12,10 @@ interface Props {
   label?: string;
 }
 
-// Adsterra Smartlink iframe (zone 29749797)
 function AdsterraSmartlink() {
-  if (!AD_SCRIPTS.smartlink) return <PlaceholderBanner />;
   return (
     <iframe
-      src={AD_SCRIPTS.smartlink}
+      src={ADSTERRA_SMARTLINK}
       style={{ width: '100%', height: '100%', border: 'none', overflow: 'hidden', display: 'block' }}
       scrolling="no"
       title="Advertisement"

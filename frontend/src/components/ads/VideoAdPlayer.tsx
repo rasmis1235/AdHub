@@ -7,7 +7,8 @@ import {
 import { Ad } from '../../types';
 import { cn } from '../../utils/cn';
 import { Button } from '../common/Button';
-import { AD_MODE, AD_SCRIPTS } from '../../lib/adProviders';
+// Adsterra Smartlink — rasmis1235.tech zone 29749797
+const ADSTERRA_SMARTLINK = 'https://www.effectivecpmnetwork.com/swm99h7e?key=2e97e1250c279cf3e75cc5b1ce1b3544';
 
 interface Props {
   ad: Ad | null;
@@ -110,29 +111,16 @@ export function VideoAdPlayer({
             muted={muted}
             onEnded={() => { if (canClaim) onClaim(false); }}
           />
-        ) : AD_MODE && AD_SCRIPTS.smartlink ? (
-          /* Live Adsterra Smartlink iframe */
+        ) : (
+          /* Adsterra Smartlink iframe */
           <iframe
             key={ad.id}
-            src={AD_SCRIPTS.smartlink}
+            src={ADSTERRA_SMARTLINK}
             style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
             scrolling="no"
             title="Advertisement"
             allow="autoplay"
           />
-        ) : (
-          /* Dev/demo fallback */
-          <div
-            className="w-full h-full flex items-center justify-center cursor-pointer"
-            style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%)' }}
-            onClick={onVisitSite}
-          >
-            <div className="text-center text-white p-8">
-              <p className="text-2xl font-black mb-2">{ad.title}</p>
-              <p className="text-white/70 text-sm">{ad.description || 'Sponsored content'}</p>
-              <p className="mt-4 text-yellow-400 font-bold text-sm">Click to visit →</p>
-            </div>
-          </div>
         )}
 
         {/* Top progress bar */}
