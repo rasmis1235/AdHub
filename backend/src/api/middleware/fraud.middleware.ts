@@ -77,7 +77,7 @@ export async function recordFingerprint(
 
   try {
     const cacheKey = `fp:${req.user.id}:${req.deviceFingerprint}`;
-    const cached = await cacheGet(cacheKey);
+    const cached = await Promise.race([cacheGet(cacheKey), new Promise<null>((r) => setTimeout(() => r(null), 800))]);
     if (!cached) {
       await query(
         `INSERT INTO device_fingerprints
@@ -89,7 +89,7 @@ export async function recordFingerprint(
            view_count = device_fingerprints.view_count + 1`,
         [req.user.id, req.deviceFingerprint, req.ip]
       );
-      await cacheSet(cacheKey, true, 3600);
+      cacheSet(cacheKey, true, 3600).catch(() => {});
     }
   } catch (error) {
     logger.warn('Fingerprint recording error:', error);

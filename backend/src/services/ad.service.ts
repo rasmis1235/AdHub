@@ -5,6 +5,16 @@ import { fraudService } from './fraud.service';
 import { Ad, AdView, User } from '../types';
 import dayjs from 'dayjs';
 
+// Redis calls must never block core ad logic — 1s timeout fallback
+const safeCache = {
+  get: <T>(key: string) =>
+    Promise.race([cacheGet<T>(key), new Promise<null>((r) => setTimeout(() => r(null), 1000))]),
+  incr: (key: string, ttl?: number) =>
+    cacheIncr(key, ttl).catch(() => 0),
+  set: (key: string, val: unknown, ttl?: number) =>
+    cacheSet(key, val, ttl).catch(() => {}),
+};
+
 export interface AdViewPayload {
   adId: string;
   watchDuration: number;
@@ -26,7 +36,7 @@ export const adService = {
     );
     const maxAdsPerDay = settings[0]?.value?.default || 20;
 
-    const dailyCount = parseInt((await cacheGet<string>(dailyCountKey)) || '0');
+    const dailyCount = parseInt((await safeCache.get<string>(dailyCountKey)) || '0');
     if (dailyCount >= maxAdsPerDay) {
       return [];
     }
@@ -195,7 +205,7 @@ export const adService = {
 
     // Update daily count in cache
     const today = dayjs().format('YYYY-MM-DD');
-    await cacheIncr(CacheKeys.dailyAdCount(userId, today), 86400);
+    safeCache.incr(CacheKeys.dailyAdCount(userId, today), 86400);
 
     return {
       pointsEarned,

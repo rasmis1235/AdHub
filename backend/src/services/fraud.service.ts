@@ -4,6 +4,12 @@ import { logger } from '../utils/logger';
 import axios from 'axios';
 import { config } from '../config';
 
+const safeRedis = {
+  get: <T>(key: string) => Promise.race([cacheGet<T>(key), new Promise<null>((r) => setTimeout(() => r(null), 800))]),
+  set: (key: string, val: unknown, ttl?: number) => cacheSet(key, val, ttl).catch(() => {}),
+  incr: (key: string, ttl?: number) => Promise.race([cacheIncr(key, ttl), new Promise<number>((r) => setTimeout(() => r(0), 800))]),
+};
+
 interface FraudCheckResult {
   blocked: boolean;
   isFraud: boolean;
@@ -45,15 +51,15 @@ export const fraudService = {
 
     // 2. Check view velocity (too many views in short time)
     const velocityKey = `velocity:${userId}:${Math.floor(Date.now() / 60000)}`; // per minute
-    const velocityCount = await cacheIncr(velocityKey, 120);
+    const velocityCount = await safeRedis.incr(velocityKey, 120);
     if (velocityCount > 3) { flags.push('high_velocity'); score += 40; }
 
     // 3. Check if same fingerprint used by multiple accounts
     const fpUsersKey = `fp_users:${fingerprint}`;
-    const fpUsers = await cacheGet<string[]>(fpUsersKey) || [];
+    const fpUsers = (await safeRedis.get<string[]>(fpUsersKey)) || [];
     if (!fpUsers.includes(userId)) {
       fpUsers.push(userId);
-      await cacheSet(fpUsersKey, fpUsers, 86400);
+      safeRedis.set(fpUsersKey, fpUsers, 86400);
     }
     if (fpUsers.length > 3) { flags.push('shared_device'); score += 35; }
 
@@ -153,7 +159,7 @@ export const fraudService = {
 
   async getIPReputation(ip: string): Promise<IPReputationResult> {
     const cacheKey = CacheKeys.ipReputation(ip);
-    const cached = await cacheGet<IPReputationResult>(cacheKey);
+    const cached = await safeRedis.get<IPReputationResult>(cacheKey);
     if (cached) return cached;
 
     // Loopback/private addresses
@@ -162,7 +168,7 @@ export const fraudService = {
         is_vpn: false, is_proxy: false, is_datacenter: false,
         is_tor: false, risk_score: 0, country: 'IN', isp: 'local',
       };
-      await cacheSet(cacheKey, safe, 3600);
+      safeRedis.set(cacheKey, safe, 3600);
       return safe;
     }
 
@@ -190,7 +196,7 @@ export const fraudService = {
           country: data.country || 'XX',
           isp: data.org || 'unknown',
         };
-        await cacheSet(cacheKey, result, 86400); // Cache 24 hours
+        safeRedis.set(cacheKey, result, 86400); // Cache 24 hours
         return result;
       }
     } catch (err) {
@@ -202,7 +208,7 @@ export const fraudService = {
       is_vpn: false, is_proxy: false, is_datacenter: false,
       is_tor: false, risk_score: 0, country: 'XX', isp: 'unknown',
     };
-    await cacheSet(cacheKey, defaultResult, 1800);
+    safeRedis.set(cacheKey, defaultResult, 1800);
     return defaultResult;
   },
 
