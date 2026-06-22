@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: adhub-api
+    env: node
+    region: singapore          # closest to India
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: false          # we trigger via GitHub Actions deploy hook
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8080
+      - key: DB_SSL
+        value: true
+
+      # Set these in Render dashboard → Environment:
+      # DATABASE_URL   → from neon.tech
+      # REDIS_URL      → from upstash.com
+      # JWT_ACCESS_SECRET
+      # JWT_REFRESH_SECRET
+      # ENCRYPTION_KEY
+      # SMTP_USER
+      # SMTP_PASS
+      # APP_URL        → https://rasmis1235.tech
+      # API_URL        → https://adhub-api.onrender.com
+      # ALLOWED_ORIGINS → https://rasmis1235.tech
