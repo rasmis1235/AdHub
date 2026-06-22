@@ -32,8 +32,11 @@ export async function authenticate(
       return;
     }
 
-    // Check cache first
-    const cachedUser = await cacheGet<User>(CacheKeys.user(payload.sub));
+    // Check cache first — timeout after 1s so Redis issues don't block auth
+    const cachedUser = await Promise.race([
+      cacheGet<User>(CacheKeys.user(payload.sub)),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 1000)),
+    ]);
     if (cachedUser) {
       req.user = cachedUser;
       return next();

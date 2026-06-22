@@ -278,10 +278,10 @@ export const authService = {
       expiresIn: ACCESS_TOKEN_EXPIRY,
     } as jwt.SignOptions);
 
-    // Cache user (exclude password_hash)
+    // Cache user (exclude password_hash) — non-blocking, Redis failure must not block login
     const { ...safeUser } = user as User & { password_hash?: string };
     delete safeUser.password_hash;
-    await cacheSet(CacheKeys.user(user.id), safeUser, 900); // 15 min
+    cacheSet(CacheKeys.user(user.id), safeUser, 900).catch(() => {});
 
     return { user: safeUser as User, accessToken, refreshToken };
   },

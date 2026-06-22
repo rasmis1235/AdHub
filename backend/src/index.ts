@@ -61,14 +61,16 @@ app.use(cookieParser());
 app.use('/api/', apiRateLimit);
 
 // Health check (no auth)
-app.get('/health', (_req, res) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    env: config.env,
-    version: process.env.npm_package_version || '1.0.0',
-  });
+app.get('/health', async (_req, res) => {
+  try {
+    const { query: dbQuery } = await import('./config/database');
+    await dbQuery('SELECT 1');
+    res.json({ status: 'healthy', timestamp: new Date().toISOString(), env: config.env, version: '1.0.0', db: 'ok' });
+  } catch {
+    res.json({ status: 'healthy', timestamp: new Date().toISOString(), env: config.env, version: '1.0.0', db: 'error' });
+  }
 });
+
 
 // API Routes
 app.use('/api/auth', authRouter);
