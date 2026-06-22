@@ -280,7 +280,7 @@ export default function AdsPage() {
           </div>
         </div>
 
-        {/* Leaderboard banner — 728x90, refreshes every 60s = extra CPM */}
+        {/* Leaderboard — 728x90, refreshes every 60s */}
         <BannerAdSlot slot="728x90" className="h-[90px] mb-4 hidden sm:block" refreshIntervalSec={60} />
 
         {/* Main layout */}
