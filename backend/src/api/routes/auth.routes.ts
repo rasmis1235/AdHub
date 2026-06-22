@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { authService, RegisterPayload } from '../../services/auth.service';
+import { emailService } from '../../services/email.service';
+import { query } from '../../config/database';
 import { authenticate } from '../middleware/auth.middleware';
 import { authRateLimit } from '../middleware/rateLimit.middleware';
 import { attachDeviceInfo } from '../middleware/fraud.middleware';
@@ -118,7 +120,7 @@ router.get('/verify-email', async (req: Request, res: Response) => {
 // POST /api/auth/resend-verification
 router.post('/resend-verification', authRateLimit, async (req: Request, res: Response) => {
   const { email } = z.object({ email: z.string().email() }).parse(req.body);
-  const { rows } = await (await import('../../config/database')).query<{ id: string; full_name: string; email_verified: boolean }>(
+  const { rows } = await query<{ id: string; full_name: string; email_verified: boolean }>(
     `SELECT id, full_name, email_verified FROM users WHERE email = $1 AND deleted_at IS NULL`,
     [email.toLowerCase()]
   );
@@ -127,9 +129,8 @@ router.post('/resend-verification', authRateLimit, async (req: Request, res: Res
     return;
   }
   const { generateToken } = await import('../../utils/crypto');
-  const { query: dbQuery } = await import('../../config/database');
   const token = generateToken(32);
-  await dbQuery(
+  await query(
     `INSERT INTO verification_tokens (user_id, token, type, expires_at)
      VALUES ($1, $2, 'email_verify', NOW() + INTERVAL '24 hours')`,
     [rows[0].id, token]
