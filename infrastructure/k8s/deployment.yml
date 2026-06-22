@@ -1,0 +1,180 @@
+---
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: adhub
+---
+# Backend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: adhub-backend
+  namespace: adhub
+  labels:
+    app: adhub-backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: adhub-backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: adhub-backend
+    spec:
+      containers:
+        - name: backend
+          image: your-registry/adhub-backend:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: adhub-backend-secrets
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+# Backend Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: adhub-backend-svc
+  namespace: adhub
+spec:
+  selector:
+    app: adhub-backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: adhub-backend-hpa
+  namespace: adhub
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: adhub-backend
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+---
+# Frontend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: adhub-frontend
+  namespace: adhub
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: adhub-frontend
+  template:
+    metadata:
+      labels:
+        app: adhub-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: your-registry/adhub-frontend:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+# Frontend Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: adhub-frontend-svc
+  namespace: adhub
+spec:
+  selector:
+    app: adhub-frontend
+  ports:
+    - port: 80
+      targetPort: 80
+---
+# Ingress (with cert-manager TLS)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: adhub-ingress
+  namespace: adhub
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+spec:
+  tls:
+    - hosts:
+        - adhub.in
+        - api.adhub.in
+      secretName: adhub-tls
+  rules:
+    - host: adhub.in
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: adhub-frontend-svc
+                port:
+                  number: 80
+    - host: api.adhub.in
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: adhub-backend-svc
+                port:
+                  number: 8000

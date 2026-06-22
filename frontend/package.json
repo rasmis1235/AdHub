@@ -1,0 +1,46 @@
+{
+  "name": "adhub-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext ts,tsx"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.21.0",
+    "@reduxjs/toolkit": "^2.0.1",
+    "react-redux": "^9.0.4",
+    "@tanstack/react-query": "^5.14.1",
+    "@tanstack/react-query-devtools": "^5.14.1",
+    "axios": "^1.6.2",
+    "react-hook-form": "^7.48.2",
+    "@hookform/resolvers": "^3.3.3",
+    "zod": "^3.22.4",
+    "react-hot-toast": "^2.4.1",
+    "recharts": "^2.10.1",
+    "framer-motion": "^10.17.0",
+    "lucide-react": "^0.298.0",
+    "clsx": "^2.0.0",
+    "tailwind-merge": "^2.2.0",
+    "dayjs": "^1.11.10",
+    "react-countdown": "^2.3.5",
+    "@fingerprintjs/fingerprintjs": "^4.2.1",
+    "react-intersection-observer": "^9.5.3"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.8",
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.32",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^8.55.0",
+    "@typescript-eslint/eslint-plugin": "^6.14.0"
+  }
+}

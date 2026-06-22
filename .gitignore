@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+.pnp
+
+# Build outputs
+dist/
+build/
+
+# Env files — never commit secrets
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# TypeScript
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+
+# Docker local data
+pgdata/
+redisdata/

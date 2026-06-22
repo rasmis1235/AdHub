@@ -1,0 +1,36 @@
+version: '3.9'
+# Development override — hot reload, exposed ports, no SSL
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  backend:
+    build:
+      target: builder
+    command: npm run dev
+    volumes:
+      - ./backend/src:/app/src
+    environment:
+      NODE_ENV: development
+    ports:
+      - "8000:8000"
+      - "9229:9229"  # Node debugger
+
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    command: npm run dev -- --host 0.0.0.0
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_API_URL: http://localhost:8000

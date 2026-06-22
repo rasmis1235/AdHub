@@ -1,0 +1,134 @@
+version: '3.9'
+
+services:
+  # ---- PostgreSQL ----
+  postgres:
+    image: postgres:15-alpine
+    container_name: adhub_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-adhub}
+      POSTGRES_USER: ${DB_USER:-adhub_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/migrations:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-adhub_user} -d ${DB_NAME:-adhub}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - adhub_network
+
+  # ---- Redis ----
+  redis:
+    image: redis:7-alpine
+    container_name: adhub_redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:-}
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --save 60 1000
+      --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - adhub_network
+
+  # ---- Backend API ----
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../infrastructure/docker/Dockerfile.backend
+    container_name: adhub_backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DB_HOST: postgres
+      REDIS_URL: redis://:${REDIS_PASSWORD:-}@redis:6379
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - adhub_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  # ---- Frontend ----
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../infrastructure/docker/Dockerfile.frontend
+      args:
+        VITE_API_URL: ${API_URL:-http://localhost:8000}
+    container_name: adhub_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+    networks:
+      - adhub_network
+
+  # ---- Nginx Reverse Proxy ----
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: adhub_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - adhub_network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  nginx_logs:
+    driver: local
+
+networks:
+  adhub_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

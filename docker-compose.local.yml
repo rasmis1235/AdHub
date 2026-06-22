@@ -1,0 +1,40 @@
+version: '3.9'
+# Runs ONLY database services locally
+# Usage: docker-compose -f docker-compose.local.yml up -d
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: adhub_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: adhub
+      POSTGRES_USER: adhub_user
+      POSTGRES_PASSWORD: AdHub@Local123
+    ports:
+      - "5432:5432"
+    volumes:
+      - adhub_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U adhub_user -d adhub"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: adhub_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - adhub_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  adhub_postgres_data:
+  adhub_redis_data:
