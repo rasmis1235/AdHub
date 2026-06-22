@@ -14,6 +14,7 @@ import { BannerAdSlot } from '../components/ads/BannerAdSlot';
 import { EarningsTracker } from '../components/ads/EarningsTracker';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
+import { useNavigate } from 'react-router-dom';
 
 interface AdViewState {
   viewId: string;
@@ -34,6 +35,7 @@ const DAILY_GOAL = 20;
 export default function AdsPage() {
   const queryClient = useQueryClient();
   const user = useSelector((s: RootState) => s.auth.user);
+  const navigate = useNavigate();
 
   // Load all page-level ad network scripts (Adsterra Social Bar, PopAds, etc.)
   useAdNetworks();
@@ -157,6 +159,13 @@ export default function AdsPage() {
 
   // ---- ad lifecycle ----
   const startWatching = useCallback(async (ad: Ad) => {
+    if (!user) {
+      // Guest can see the ad but can't earn — redirect to login when they try to start
+      toast('Login to earn points from this ad!', { icon: '🔒' });
+      navigate('/login', { state: { from: '/ads' } });
+      return;
+    }
+
     stopTimer();
     setActiveAd(ad);
     setProgress(0);

@@ -60,13 +60,15 @@ function AppRoutes() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
+      {/* Ads page is public — anyone can see ads, login required only to claim points */}
+      <Route path="/ads" element={<Layout><AdsPage /></Layout>} />
+
       {/* Protected User Routes */}
       <Route path="/*" element={
         <RequireAuth>
           <Layout>
             <Routes>
               <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/ads" element={<AdsPage />} />
               <Route path="/transactions" element={<div className="p-6"><h1 className="text-xl font-bold">Transaction History</h1></div>} />
               <Route path="/withdraw" element={<div className="p-6"><h1 className="text-xl font-bold">Withdraw</h1></div>} />
               <Route path="/referrals" element={<div className="p-6"><h1 className="text-xl font-bold">Referrals</h1></div>} />
